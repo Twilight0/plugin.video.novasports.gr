@@ -16,33 +16,44 @@
 '''
 
 
-import urlparse, sys
+import sys
 from resources.lib import novasports
+from tulip.compat import parse_qsl
 
-params = dict(urlparse.parse_qsl(sys.argv[2].replace('?','')))
+params = dict(parse_qsl(sys.argv[2].replace('?','')))
 
 action = params.get('action')
 url = params.get('url')
+query = params.get('query')
 
-if action is None:
-    novasports.indexer().root()
-
-elif action == 'categories':
-    novasports.indexer().categories()
-
-elif action == 'shows':
-    novasports.indexer().shows()
-
-elif action == 'competitionsMenu':
-    novasports.indexer().competitionsMenu()
-
-elif action == 'competitions':
-    novasports.indexer().competitions(url)
+if action is None or action == 'root':
+    novasports.Indexer().root()
 
 elif action == 'videos':
-    novasports.indexer().videos(url)
+    novasports.Indexer().videos(url)
+
+elif action == 'matches':
+    novasports.Indexer().matches(query=query)
+
+elif action == 'event':
+    novasports.Indexer().event(url)
+
+elif action == 'add_date':
+    novasports.Indexer().add_date()
+
+elif action == 'webtv':
+    novasports.Indexer().webtv()
+
+elif action == 'webtv_collection':
+    novasports.Indexer().webtv_collection()
+
+elif action == 'go_to_root':
+    from tulip.directory import run_builtin
+    run_builtin(action='root', path_history='replace')
 
 elif action == 'play':
-    novasports.indexer().play(url)
+    novasports.Indexer().play(url)
 
-
+elif action == 'cache_clear':
+    from tulip import cache
+    cache.clear(withyes=False)

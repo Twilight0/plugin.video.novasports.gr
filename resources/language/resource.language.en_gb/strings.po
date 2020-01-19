@@ -7,23 +7,54 @@
 msgid ""
 msgstr ""
 
+msgctxt "#30402"
+msgid "Success"
+msgstr ""
 
 msgctxt "#32001"
 msgid "Latest Videos"
 msgstr ""
 
 msgctxt "#32002"
-msgid "Latest Shows"
+msgid "Live"
 msgstr ""
 
 msgctxt "#32003"
-msgid "Categories"
+msgid "Matches"
 msgstr ""
 
 msgctxt "#32004"
-msgid "Competitions"
+msgid "Score: "
 msgstr ""
 
 msgctxt "#32005"
-msgid "Shows"
+msgid "Enter another date"
+msgstr ""
+
+msgctxt "#32006"
+msgid "Next date"
+msgstr ""
+
+msgctxt "#32007"
+msgid "Previous date"
+msgstr ""
+
+msgctxt "#32008"
+msgid "No scheduled match was found for this date[CR]select to return to current date"
+msgstr ""
+
+msgctxt "#32009"
+msgid "Web TV"
+msgstr ""
+
+msgctxt "#32010"
+msgid "Clear function cache"
+msgstr ""
+
+msgctxt "#32011"
+msgid "Description was not found"
+msgstr ""
+
+msgctxt "#32012"
+msgid "Go to root menu"
 msgstr ""

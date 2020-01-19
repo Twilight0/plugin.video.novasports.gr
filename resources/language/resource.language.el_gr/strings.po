@@ -7,23 +7,54 @@
 msgid ""
 msgstr ""
 
+msgctxt "#30402"
+msgid "Success"
+msgstr "Επιτυχία"
 
 msgctxt "#32001"
 msgid "Latest Videos"
 msgstr "Πρόσφατα βίντεο"
 
 msgctxt "#32002"
-msgid "Latest Shows"
-msgstr "Πρόσφατες εκπομπές"
+msgid "Live"
+msgstr "Ζωντανά"
 
 msgctxt "#32003"
-msgid "Categories"
-msgstr "Κατηγορίες"
+msgid "Matches"
+msgstr "Παιχνίδια"
 
 msgctxt "#32004"
-msgid "Competitions"
-msgstr "Διοργανώσεις"
+msgid "Score"
+msgstr "Σκορ"
 
 msgctxt "#32005"
-msgid "Shows"
-msgstr "Εκπομπές"
+msgid "Enter another date"
+msgstr "Εισάγετε άλλη ημερομηνία"
+
+msgctxt "#32006"
+msgid "Next date"
+msgstr "Επόμενη ημερομηνία"
+
+msgctxt "#32007"
+msgid "Previous date"
+msgstr "Προηγούμενη ημερομηνία"
+
+msgctxt "#32008"
+msgid "No scheduled match was found for this date[CR]select to return to current date"
+msgstr "Δεν βρέθηκε προγραμματισμένη μετάδοση γι' αυτην την ημερομηνία[CR]επιλέξτε για επιστροφή στην τρέχουσα ημερομηνία"
+
+msgctxt "#32009"
+msgid "Web TV"
+msgstr "Web TV"
+
+msgctxt "#32010"
+msgid "Clear function cache"
+msgstr "Διαγραφή μνήμης λειτουργιών"
+
+msgctxt "#32011"
+msgid "Description was not found"
+msgstr "Δεν βρέθηκε περιγραφή"
+
+msgctxt "#32012"
+msgid "Go to root menu"
+msgstr "Πήγαινε στο αρχικό μενού"

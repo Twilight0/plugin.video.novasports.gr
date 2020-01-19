@@ -14,208 +14,316 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import unicode_literals, absolute_import
+
+from time import sleep
+import re
+from tulip.compat import bytes, str
+from tulip import directory, client, cache, control
+from datetime import date
 
 
-import urlparse,json
-
-from tulip import directory, client, cache
-
-
-class indexer:
+class Indexer:
 
     def __init__(self):
-        self.list = []
-        self.base_link = 'http://www.novasports.gr'
-        self.menus_link = '/nsmobile/v3/CompetitionsMenu/List'
-        self.showmenus_link = '/nsmobile/v3/Shows?mode=2&pagesize=100&page=1'
-        self.competitions_link = '/nsmobile/v3/CompetitionsMenu/CompetitionsOnDemand/?cat=%s'
-        self.videos_link = '/nsmobile/v3/VideosOnDemand/?pagesize=100&page=1&content_request=all&categoryID=%s&teamId='
-        self.shows_link = '/nsmobile/v3/Shows?pagesize=100&page=1&mode=1&show=%s'
-        self.popvideos_link = '/nsmobile/v3/VideosOnDemand/?pagesize=100&page=1&content_request=all&categoryID=-1&teamId='
-        self.popshows_link = '/nsmobile/v3/Shows?pagesize=100&page=1&mode=1&show='
 
+        self.list = []
+        self.data = []
+        self.base_link = 'https://www.novasports.gr'
+        self.api_link = ''.join([self.base_link, '/api/v1'])
+        self.latest_link = ''.join([self.api_link, '/videos/feed'])
+        self.live_link = ''.join([self.api_link, '/videos/livetv'])
+        self.matches_link = ''.join([self.api_link, '/matchcenter/events/date/{date}'])
+        self.event_link = ''.join([self.api_link, '/videos/event/{event}/teama/{team_a}/teamb/team_b'])
+        self.sports_link = ''.join([self.api_link, '/webtv/{type}/{sport_id}/range/{range_id}/number/24'])
+
+        # https://www.novasports.gr/api/v1/webtv/event/97461/range/0/number/24
+        self.webtv_link = ''.join([self.base_link, '/web-tv'])
 
     def root(self):
+
         self.list = [
-        {
-        'title': 32001,
-        'action': 'videos',
-        'url': self.popvideos_link
-        },
-
-        {
-        'title': 32002,
-        'action': 'videos',
-        'url': self.popshows_link
-        },
-
-        {
-        'title': 32003,
-        'action': 'categories'
-        },
-
-        {
-        'title': 32004,
-        'action': 'competitionsMenu'
-        },
-
-        {
-        'title': 32005,
-        'action': 'shows'
-        }
+            {
+                'title': control.lang(32002),
+                'action': 'videos',
+                'url': self.live_link
+            }
+            ,
+            {
+                'title': control.lang(32001),
+                'action': 'videos',
+                'url': self.latest_link
+            }
+            ,
+            {
+                'title': control.lang(32003),
+                'action': 'matches'
+            }
+            ,
+            {
+                'title': control.lang(32009),
+                'action': 'webtv'
+            }
         ]
 
-        directory.add(self.list, content='videos')
-        return self.list
+        for item in self.list:
 
-
-    def categories(self):
-
-        self.list = cache.get(self.item_list_1, 24, self.menus_link)
-
-        if self.list == None: return
-
-        for i in self.list: i.update({'url': self.videos_link % i['cat']})
-
-        for i in self.list: i.update({'action': 'videos'})
+            cache_clear = {'title': 32010, 'query': {'action': 'cache_clear'}}
+            item.update({'cm': [cache_clear]})
 
         directory.add(self.list, content='videos')
-        return self.list
-
-
-    def competitionsMenu(self):
-        self.list = cache.get(self.item_list_1, 24, self.menus_link)
-
-        if self.list == None: return
-
-        self.list = [i for i in self.list if i['row'] in ['1', '2', '3', '8']]
-
-        for i in self.list: i.update({'url': self.competitions_link % i['row']})
-
-        for i in self.list: i.update({'action': 'competitions'})
-
-        directory.add(self.list, content='videos')
-        return self.list
-
-
-    def competitions(self, url):
-        self.list = cache.get(self.item_list_1, 24, url)
-
-        if self.list == None: return
-
-        for i in self.list: i.update({'url': self.videos_link % i['cat']})
-
-        for i in self.list: i.update({'action': 'videos'})
-
-        directory.add(self.list, content='videos')
-        return self.list
-
-
-    def shows(self):
-        self.list = cache.get(self.item_list_1, 24, self.showmenus_link)
-
-        if self.list == None: return
-
-        for i in self.list: i.update({'url': self.shows_link % i['show']})
-
-        for i in self.list: i.update({'action': 'videos'})
-
-        directory.add(self.list, content='videos')
-        return self.list
-
 
     def videos(self, url):
-        self.list = cache.get(self.item_list_2, 1, url)
 
-        if self.list == None: return
+        self.list = cache.get(self.items_list, 1, url)
 
-        for i in self.list: i.update({'action': 'play', 'isFolder': 'False'})
+        if self.list is None:
+            return
+
+        for i in self.list:
+            i.update({'action': 'play', 'isFolder': 'False'})
 
         directory.add(self.list, content='videos')
+
+    def items_list(self, url):
+
+        if '/api/v1' not in url:
+
+            html = client.request(url)
+
+            json_id = client.parseDOM(html, 'div', attrs={'class': 'web-tv-container-.+'}, ret='class')[0]
+            type_ = client.parseDOM(html, 'div', attrs={'class': 'vocabulary hidden'})[0]
+            json_id = re.search(r'(\d+)', json_id).group(1)
+
+            urls = [self.sports_link.format(type=type_ ,sport_id=json_id, range_id=i) for i in list(range(0, 21))]
+
+            for url in urls:
+
+                _json = client.request(url, output='json')
+                sleep(0.1)
+                items = _json['Items']
+
+                self.data.extend(items)
+
+        else:
+
+            self.data = client.request(url, output='json')
+
+        for r in self.data:
+
+            try:
+                title = client.replaceHTMLCodes(r['Title'])
+            except KeyError:
+                continue
+            try:
+                plot = client.replaceHTMLCodes(r['Short_Desc'])
+            except TypeError:
+                plot = control.lang(32011)
+            urls = r['VideoUrl']
+
+            for u in urls:
+
+                data = {'title': title, 'plot': plot}
+
+                image = r.get('Image')
+
+                if image:
+                    image = ''.join([self.base_link, image])
+                    data.update({'image': image})
+                else:
+                    data.update({'icon': control.icon()})
+
+                url = u['uri']
+
+                data.update({'url': url})
+
+                self.list.append(data)
+
         return self.list
 
+    def matches(self, query=None):
+
+        def appender(events):
+
+            _list = []
+
+            for event in events:
+
+                event_name = event['event_name']
+
+                match_centers = event['match_centers']
+
+                for match in match_centers:
+
+                    team_a = match['team_a']
+                    team_b = match['team_b']
+                    score_a = str(match['score_a'])
+                    score_b = str(match['score_b'])
+                    desc = match['desc']
+                    if not desc:
+                        desc = control.lang(32011)
+                    _date = str(match['date'])
+                    url = ''.join([self.base_link, match['alias_url']])
+
+                    title = ''.join(
+                        [
+                            event_name, u': ', team_a, u' - ', team_b, u'[CR]', control.lang(32004),
+                            score_a, u' - ', score_b, u' (', desc, u' | ', _date, u')'
+                        ]
+                    )
+
+                    data = {'title': title, 'url': url, 'action': 'event'}
+
+                    _list.append(data)
+
+            return _list
+
+        if not query:
+            date_ = bytes(date.today()).replace('-', '')
+        else:
+            date_ = bytes(query)
+
+        result = client.request(self.matches_link.format(date=date_), output='json')
+
+        if not result['events'] and not result['friendly']:
+
+            self.list = [{'title': control.lang(32008), 'action': 'matches'}]
+
+        else:
+
+            if result['events']:
+
+                self.list.extend(appender(result['events']))
+
+            if result['friendly']:
+
+                self.list.extend(appender(result['friendly']))
+
+        previous_date = {
+            'title': control.lang(32007),
+            'action': 'matches',
+            'query': bytes(int(date_) - 1)
+        }
+
+        next_date = {
+            'title': control.lang(32006),
+            'action': 'matches',
+            'query': bytes(int(date_) + 1)
+        }
+
+        add_date = {
+            'title': control.lang(32005),
+            'action': 'add_date',
+            'isFolder': 'False',
+            'isPlayable': 'False'
+        }
+
+        go_to_root = {
+            'title': control.lang(32012),
+            'action': 'go_to_root',
+            'isFolder': 'False',
+            'isPlayable': 'False'
+        }
+
+        self.list.insert(0, previous_date)
+        self.list.append(next_date)
+        self.list.append(add_date)
+        self.list.append(go_to_root)
+
+        directory.add(self.list)
+
+    def add_date(self):
+
+        input_date = control.inputDialog(type=control.input_date)
+
+        input_date = ''.join(input_date.split('/')[::-1]).replace(' ',  '0')
+
+        directory.run_builtin(action='matches', query=input_date)
+
+    def event(self, url):
+
+        html = client.request(url)
+
+        event_id = client.parseDOM(html, 'div', attrs={'id': 'event_id'})[0]
+        teama_id = client.parseDOM(html, 'div', attrs={'id': 'teama_id'})[0]
+        teamb_id = client.parseDOM(html, 'div', attrs={'id': 'teamb_id'})[0]
+
+        items = client.request(self.event_link.format(event=event_id, team_a=teama_id, team_b=teamb_id), output='json')
+
+        videos = [i for i in items if ('Has_Videos' in i and i['Has_Videos']) or ('MediaType' in i and i['MediaType'] == 'video')]
+
+        for video in videos:
+
+            title = client.replaceHTMLCodes(video['Title'])
+
+            try:
+                image = ''.join([self.base_link, video['ImageLowQuality']])
+                fanart = ''.join([self.base_link, video['Image']])
+            except KeyError:
+                image = ''.join([self.base_link, video['Image']])
+                fanart = None
+
+            url = ''.join([self.base_link, video['Link']])
+
+            data = {'title': title, 'image': image, 'url': url, 'action': 'play', 'isFolder': 'False'}
+
+            if fanart:
+                data.update({'fanart': fanart})
+
+            self.list.append(data)
+
+        directory.add(self.list)
 
     def play(self, url):
-        directory.resolve(url)
 
+        if '.mp4' in url or '.m3u8' in url:
 
-    def item_list_1(self, url):
+            stream = url
+
+        else:
+
+            html = client.request(url)
+
+            stream = re.search("video/mp4.+?'(.+?)'", html, re.S).group(1)
+
         try:
-            url = urlparse.urljoin(self.base_link, url)
+            addon_enabled = control.addon_details('inputstream.adaptive').get('enabled')
+        except KeyError:
+            addon_enabled = False
 
-            result = client.request(url, mobile=True)
+        dash = '.m3u8' in url and control.kodi_version() >= 18.0 and addon_enabled
 
-            result = json.loads(result)
+        if dash:
+            directory.resolve(stream, dash=dash, mimetype='application/vnd.apple.mpegurl', manifest_type='hls')
+        else:
+            directory.resolve(stream)
 
-            if 'onDemandCategories' in result:
-                items = result['onDemandCategories']
+    def _webtv(self):
 
-            elif 'competitionsMenu' in result:
-                items = result['competitionsMenu']
+        html = client.request(self.webtv_link)
 
-            elif 'showsSpinner' in result:
-                items = result['showsSpinner']
-        except:
-            return
+        web_tv_nav = client.parseDOM(html, 'ul', attrs={'class': 'menu menu--web-tv nav'})[0]
+
+        items = client.parseDOM(web_tv_nav, 'li')[1:]
 
         for item in items:
-            try:
-                if 'artCatName' in item: title = item['artCatName']
-                elif 'showTitle' in item: title = item['showTitle']
-                elif 'title' in item: title = item['title']
-                title = title.strip()
-                title = title.encode('utf-8')
 
-                cat = str(item['artCatID']) if 'artCatID' in item else '0'
-                cat = cat.encode('utf-8')
+            title = client.parseDOM(item, 'a')[0]
+            url = client.parseDOM(item, 'a', ret='href')[0]
+            url = ''.join([self.base_link, url])
 
-                show = str(item['showID']) if 'showID' in item else '0'
-                show = show.encode('utf-8')
-
-                row = str(item['rowID']) if 'rowID' in item else '0'
-                row = row.encode('utf-8')
-
-                self.list.append({'title': title, 'cat': cat, 'row': row, 'show': show})
-            except:
-                pass
+            self.list.append({'title': title, 'url': url})
 
         return self.list
 
+    def webtv(self):
 
-    def item_list_2(self, url):
-        try:
-            url = urlparse.urljoin(self.base_link, url)
+        self.list = cache.get(self._webtv, 24)
 
-            result = client.request(url, mobile=True)
-
-            result = json.loads(result)
-
-            if 'showsMedia' in result:
-                items = result['showsMedia']
-
-            elif 'onDemandLatest' in result:
-                items = result['onDemandLatest']
-        except:
+        if self.list is None:
             return
 
-        for item in items:
-            try:
-                if 'mediaTitle' in item: title = item['mediaTitle']
-                elif 'title' in item: title = item['title']
-                title = title.strip()
-                title = title.encode('utf-8')
+        for i in self.list:
+            i.update({'action': 'videos'})
 
-                url = item['file']
-                url = url.encode('utf-8')
-
-                image = item['thumb']
-                image = image.replace(' ', '%20')
-                image = image.encode('utf-8')
-
-                self.list.append({'title': title, 'url': url, 'image': image})
-            except:
-                pass
-
-        return self.list
-
-
+        directory.add(self.list)
