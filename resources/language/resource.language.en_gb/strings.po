@@ -58,3 +58,19 @@ msgstr ""
 msgctxt "#32012"
 msgid "Go to root menu"
 msgstr ""
+
+msgctxt "#32013"
+msgid "More..."
+msgstr ""
+
+msgctxt "#32014"
+msgid "Enable HLS Dash"
+msgstr ""
+
+msgctxt "#32015"
+msgid "General"
+msgstr ""
+
+msgctxt "#32016"
+msgid "Cache limit in hours"
+msgstr ""

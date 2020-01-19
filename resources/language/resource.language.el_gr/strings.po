@@ -58,3 +58,19 @@ msgstr "Δεν βρέθηκε περιγραφή"
 msgctxt "#32012"
 msgid "Go to root menu"
 msgstr "Πήγαινε στο αρχικό μενού"
+
+msgctxt "#32013"
+msgid "More..."
+msgstr "Περισσότερα..."
+
+msgctxt "#32014"
+msgid "Enable HLS Dash"
+msgstr "Ενεργοποίηση HLS Dash"
+
+msgctxt "#32015"
+msgid "General"
+msgstr "Γενικά"
+
+msgctxt "#32016"
+msgid "Cache limit in hours"
+msgstr "Λήξη μνήμης σε ώρες"

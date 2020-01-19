@@ -30,7 +30,7 @@ if action is None or action == 'root':
     novasports.Indexer().root()
 
 elif action == 'videos':
-    novasports.Indexer().videos(url)
+    novasports.Indexer().videos(url=url, query=query)
 
 elif action == 'matches':
     novasports.Indexer().matches(query=query)

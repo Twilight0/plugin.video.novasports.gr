@@ -23,6 +23,9 @@ from tulip import directory, client, cache, control
 from datetime import date
 
 
+CACHE_SIZE = int(control.setting('cache_size'))
+
+
 class Indexer:
 
     def __init__(self):
@@ -33,11 +36,10 @@ class Indexer:
         self.api_link = ''.join([self.base_link, '/api/v1'])
         self.latest_link = ''.join([self.api_link, '/videos/feed'])
         self.live_link = ''.join([self.api_link, '/videos/livetv'])
+        self.live_by_date_link = ''.join([self.api_link, '/videos/livebydate/{date}'])
         self.matches_link = ''.join([self.api_link, '/matchcenter/events/date/{date}'])
         self.event_link = ''.join([self.api_link, '/videos/event/{event}/teama/{team_a}/teamb/team_b'])
         self.sports_link = ''.join([self.api_link, '/webtv/{type}/{sport_id}/range/{range_id}/number/24'])
-
-        # https://www.novasports.gr/api/v1/webtv/event/97461/range/0/number/24
         self.webtv_link = ''.join([self.base_link, '/web-tv'])
 
     def root(self):
@@ -64,6 +66,11 @@ class Indexer:
                 'title': control.lang(32009),
                 'action': 'webtv'
             }
+            # ,
+            # {
+            #     'title': control.lang(32009),
+            #     'action': 'webtv'
+            # }
         ]
 
         for item in self.list:
@@ -73,15 +80,53 @@ class Indexer:
 
         directory.add(self.list, content='videos')
 
-    def videos(self, url):
+    def videos(self, url, query=None):
 
-        self.list = cache.get(self.items_list, 1, url)
+        self.list = cache.get(self.items_list, CACHE_SIZE, url)
 
         if self.list is None:
             return
 
         for i in self.list:
             i.update({'action': 'play', 'isFolder': 'False'})
+
+        if url == self.live_link:
+
+            more_live = {
+                'title': control.lang(32013),
+                'url': self.live_by_date_link.format(date=bytes(date.today()).replace('-', '')),
+                'action': 'videos',
+                'query': bytes(date.today()).replace('-', '')
+            }
+
+            self.list.append(more_live)
+
+        elif 'livebydate' in url:
+
+            go_to_root = {
+                'title': control.lang(32012),
+                'action': 'go_to_root',
+                'isFolder': 'False',
+                'isPlayable': 'False'
+            }
+
+            next_live = {
+                'title': control.lang(32006),
+                'url': self.live_by_date_link.format(date=int(query) + 1),
+                'action': 'videos',
+                'query': bytes(int(query) + 1)
+            }
+
+            previous_live = {
+                'title': control.lang(32007),
+                'url': self.live_by_date_link.format(date=int(query) - 1),
+                'action': 'videos',
+                'query': bytes(int(query) - 1)
+            }
+
+            self.list.insert(0, next_live)
+            self.list.append(previous_live)
+            self.list.append(go_to_root)
 
         directory.add(self.list, content='videos')
 
@@ -95,7 +140,9 @@ class Indexer:
             type_ = client.parseDOM(html, 'div', attrs={'class': 'vocabulary hidden'})[0]
             json_id = re.search(r'(\d+)', json_id).group(1)
 
-            urls = [self.sports_link.format(type=type_ ,sport_id=json_id, range_id=i) for i in list(range(0, 21))]
+            urls = [
+                self.sports_link.format(type=type_ ,sport_id=json_id, range_id=i) for i in list(range(0, int(control.setting('pages_size')) + 1))
+            ]
 
             for url in urls:
 
@@ -115,6 +162,10 @@ class Indexer:
                 title = client.replaceHTMLCodes(r['Title'])
             except KeyError:
                 continue
+
+            if 'Is_Live' in r:
+                title = '[CR]'.join([title, r['Live_From']])
+
             try:
                 plot = client.replaceHTMLCodes(r['Short_Desc'])
             except TypeError:
@@ -257,10 +308,22 @@ class Indexer:
             title = client.replaceHTMLCodes(video['Title'])
 
             try:
-                image = ''.join([self.base_link, video['ImageLowQuality']])
-                fanart = ''.join([self.base_link, video['Image']])
+                image = video['ImageLowQuality']
+                if image:
+                    image = ''.join([self.base_link, image])
+                else:
+                    image = control.icon()
+                fanart = video['Image']
+                if fanart:
+                    fanart = ''.join([self.base_link, fanart])
+                else:
+                    fanart = None
             except KeyError:
-                image = ''.join([self.base_link, video['Image']])
+                image = video['Image']
+                if image:
+                    image = ''.join([self.base_link, image])
+                else:
+                    image = control.icon()
                 fanart = None
 
             url = ''.join([self.base_link, video['Link']])
@@ -291,7 +354,7 @@ class Indexer:
         except KeyError:
             addon_enabled = False
 
-        dash = '.m3u8' in url and control.kodi_version() >= 18.0 and addon_enabled
+        dash = '.m3u8' in url and control.kodi_version() >= 18.0 and addon_enabled and control.setting('hls_dash') == 'true'
 
         if dash:
             directory.resolve(stream, dash=dash, mimetype='application/vnd.apple.mpegurl', manifest_type='hls')
