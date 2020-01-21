@@ -74,3 +74,35 @@ msgstr ""
 msgctxt "#32016"
 msgid "Cache limit in hours"
 msgstr ""
+
+msgctxt "#32017"
+msgid "Categories"
+msgstr ""
+
+msgctxt "#32018"
+msgid "Teams"
+msgstr ""
+
+msgctxt "#32019"
+msgid "Sport: {}"
+msgstr ""
+
+msgctxt "#32020"
+msgid "Soccer/Football"
+msgstr ""
+
+msgctxt "#32021"
+msgid "Basket"
+msgstr ""
+
+msgctxt "#32022"
+msgid "Bookmarks"
+msgstr ""
+
+msgctxt "#32501"
+msgid "Add to bookmarks"
+msgstr ""
+
+msgctxt "#32502"
+msgid "Remove from bookmarks"
+msgstr ""

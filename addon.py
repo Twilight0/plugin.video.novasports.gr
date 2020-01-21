@@ -44,6 +44,15 @@ elif action == 'add_date':
 elif action == 'webtv':
     novasports.Indexer().webtv()
 
+elif action == 'teams_index':
+    novasports.Indexer().teams_index()
+
+elif action == 'categories':
+    novasports.Indexer().categories()
+
+elif action == 'switch':
+    novasports.Indexer().switch()
+
 elif action == 'webtv_collection':
     novasports.Indexer().webtv_collection()
 

@@ -74,3 +74,35 @@ msgstr "Γενικά"
 msgctxt "#32016"
 msgid "Cache limit in hours"
 msgstr "Λήξη μνήμης σε ώρες"
+
+msgctxt "#32017"
+msgid "Categories"
+msgstr "Κατηγορίες"
+
+msgctxt "#32018"
+msgid "Teams"
+msgstr "Ομάδες"
+
+msgctxt "#32019"
+msgid "Sport: {}"
+msgstr "Άθλημα: {}"
+
+msgctxt "#32020"
+msgid "Soccer/Football"
+msgstr "Ποδόσφαιρο"
+
+msgctxt "#32021"
+msgid "Basket"
+msgstr "Μπάσκετ"
+
+msgctxt "#32022"
+msgid "Bookmarks"
+msgstr "Σελιδοδείκτες"
+
+msgctxt "#32501"
+msgid "Add to bookmarks"
+msgstr "Προσθήκη στους σελιδοδείκτες"
+
+msgctxt "#32502"
+msgid "Remove from bookmarks"
+msgstr "Αφαίρεση από σελιδοδείκτες"

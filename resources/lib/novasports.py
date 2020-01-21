@@ -17,9 +17,9 @@
 from __future__ import unicode_literals, absolute_import
 
 from time import sleep
-import re
-from tulip.compat import bytes, str
-from tulip import directory, client, cache, control
+import re, json
+from tulip.compat import bytes, str, iteritems
+from tulip import directory, client, cache, control, user_agents
 from datetime import date
 
 
@@ -40,6 +40,7 @@ class Indexer:
         self.matches_link = ''.join([self.api_link, '/matchcenter/events/date/{date}'])
         self.event_link = ''.join([self.api_link, '/videos/event/{event}/teama/{team_a}/teamb/team_b'])
         self.sports_link = ''.join([self.api_link, '/webtv/{type}/{sport_id}/range/{range_id}/number/24'])
+        self.index_link = ''.join([self.api_link, '/{type}/{event_id}/videos/page/{page}/range/9'])
         self.webtv_link = ''.join([self.base_link, '/web-tv'])
 
     def root(self):
@@ -66,11 +67,16 @@ class Indexer:
                 'title': control.lang(32009),
                 'action': 'webtv'
             }
-            # ,
-            # {
-            #     'title': control.lang(32009),
-            #     'action': 'webtv'
-            # }
+            ,
+            {
+                'title': control.lang(32017),
+                'action': 'categories'
+            }
+            ,
+            {
+                'title': control.lang(32022),
+                'action': 'bookmarks'
+            }
         ]
 
         for item in self.list:
@@ -79,6 +85,24 @@ class Indexer:
             item.update({'cm': [cache_clear]})
 
         directory.add(self.list, content='videos')
+
+    def bookmarks(self):
+
+        self.list = bookmarks.get()
+
+        if self.list is None:
+            self.list = [{'title': 'N/A', 'action': None}]
+            directory.add(self.list)
+            return
+
+        for i in self.list:
+            bookmark = dict((k, v) for k, v in iteritems(i) if not k == 'next')
+            bookmark['delbookmark'] = i['url']
+            i.update({'cm': [{'title': 32502, 'query': {'action': 'deleteBookmark', 'url': json.dumps(bookmark)}}]})
+
+        self.list = sorted(self.list, key=lambda k: k['title'].lower())
+
+        directory.add(self.list)
 
     def videos(self, url, query=None):
 
@@ -136,13 +160,30 @@ class Indexer:
 
             html = client.request(url)
 
-            json_id = client.parseDOM(html, 'div', attrs={'class': 'web-tv-container-.+'}, ret='class')[0]
-            type_ = client.parseDOM(html, 'div', attrs={'class': 'vocabulary hidden'})[0]
-            json_id = re.search(r'(\d+)', json_id).group(1)
+            if 'web-tv' in url:
 
-            urls = [
-                self.sports_link.format(type=type_ ,sport_id=json_id, range_id=i) for i in list(range(0, int(control.setting('pages_size')) + 1))
-            ]
+                json_id = client.parseDOM(html, 'div', attrs={'class': 'web-tv-container-.+'}, ret='class')[0]
+                json_id = re.search(r'(\d+)', json_id).group(1)
+                type_ = client.parseDOM(html, 'div', attrs={'class': 'vocabulary hidden'})[0]
+
+                urls = [
+                    self.sports_link.format(type=type_ ,sport_id=json_id, range_id=i) for i in
+                    list(range(0, int(control.setting('pages_size')) + 1))
+                ]
+
+            else:
+
+                try:
+                    event_id = client.parseDOM(html, 'div', attrs={'id': 'event_id'})[0]
+                    type_ = 'event'
+                except IndexError:
+                    event_id = client.parseDOM(html, 'div', attrs={'id': 'video-list-term-id'})[0]
+                    type_ = 'team'
+
+                urls = [
+                    self.index_link.format(type=type_, event_id=event_id, page=i) for i in
+                    list(range(0, int(control.setting('pages_size')) + 1))
+                ]
 
             for url in urls:
 
@@ -390,3 +431,151 @@ class Indexer:
             i.update({'action': 'videos'})
 
         directory.add(self.list)
+
+    def index(self):
+
+        html = client.request(self.webtv_link.replace('www', 'm'), headers={'User-Agent': user_agents.IPHONE})
+
+        items = client.parseDOM(html, 'li', attrs={'class': 'expanded dropdown'})
+
+        football = items[0]
+        basket = items[1]
+        teams = items[5]
+
+        football_items = client.parseDOM(football, 'div', attrs={'class': 'mega-menu-top-title'})
+        basket_items = client.parseDOM(basket, 'div', attrs={'class': 'mega-menu-top-title'})
+        teams_items = client.parseDOM(teams, 'div', attrs={'class': 'mega-menu-top-title'})
+        football_teams = [i for i in teams_items if 'podosfairo' in i]
+        basket_teams = [i for i in teams_items if 'mpasket' in i]
+
+        fb = []
+        bt = []
+        ftm = []
+        btm = []
+
+        for fi in football_items:
+
+            try:
+                title = client.replaceHTMLCodes(client.parseDOM(fi, 'a')[0])
+            except IndexError:
+                continue
+            url = ''.join([self.base_link, client.parseDOM(fi, 'a', ret='href')[0], '?type=videos'])
+
+            fb.append({'title': title, 'url': url})
+
+        for bi in basket_items:
+
+            try:
+                title = client.replaceHTMLCodes(client.parseDOM(bi, 'a')[0])
+            except IndexError:
+                continue
+            url = ''.join([self.base_link, client.parseDOM(bi, 'a', ret='href')[0], '?type=videos'])
+
+            bt.append({'title': title, 'url': url})
+
+        for ti in football_teams:
+
+            try:
+                title = client.replaceHTMLCodes(client.parseDOM(ti, 'a')[0])
+            except IndexError:
+                continue
+            url = ''.join([self.base_link, client.parseDOM(ti, 'a', ret='href')[0], '?type=videos'])
+            image = ''.join([self.base_link, client.parseDOM(ti, 'img', ret='src')[0]])
+
+            ftm.append({'title': title, 'url': url, 'image': image})
+
+        for ti in basket_teams:
+
+            try:
+                title = client.replaceHTMLCodes(client.parseDOM(ti, 'a')[0])
+            except IndexError:
+                continue
+            url = ''.join([self.base_link, client.parseDOM(ti, 'a', ret='href')[0], '?type=videos'])
+            image = ''.join([self.base_link, client.parseDOM(ti, 'img', ret='src')[0]])
+
+            btm.append({'title': title, 'url': url, 'image': image})
+
+        return {'football': fb, 'basket': bt, 'teams_football': ftm, 'teams_basket': btm}
+
+    def categories(self):
+
+        index_items = cache.get(self.index, 96)
+
+        if index_items is None:
+            return
+
+        if control.setting('sport') == '0':
+            integer = 32020
+            self.list = index_items['football']
+        else:
+            self.list = index_items['basket']
+            integer = 32021
+
+        for i in self.list:
+            i.update({'action': 'videos'})
+            bookmark = dict((k, v) for k, v in iteritems(i) if not k == 'next')
+            bookmark['bookmark'] = i['url']
+            i.update({'cm': [{'title': 32501, 'query': {'action': 'addBookmark', 'url': json.dumps(bookmark)}}]})
+
+        teams = {
+            'title': control.lang(32018),
+            'action': 'teams_index'
+        }
+
+        selector = {
+                'title': control.lang(32019).format(control.lang(integer)),
+                'action': 'switch',
+                'isFolder': 'False',
+                'isPlayable': 'False'
+        }
+
+        self.list.insert(0, selector)
+        self.list.append(teams)
+
+        directory.add(self.list)
+
+    def teams_index(self):
+
+        index_items = cache.get(self.index, 96)
+
+        if index_items is None:
+            return
+
+        if control.setting('sport') == '0':
+            integer = 32020
+            self.list = index_items['teams_football']
+        else:
+            self.list = index_items['teams_basket']
+            integer = 32021
+
+        for i in self.list:
+            i.update({'action': 'videos'})
+            bookmark = dict((k, v) for k, v in iteritems(i) if not k == 'next')
+            bookmark['bookmark'] = i['url']
+            i.update({'cm': [{'title': 32501, 'query': {'action': 'addBookmark', 'url': json.dumps(bookmark)}}]})
+
+        selector = {
+            'title': control.lang(32019).format(control.lang(integer)),
+            'action': 'switch',
+            'isFolder': 'False',
+            'isPlayable': 'False'
+        }
+
+        self.list.insert(0, selector)
+
+        directory.add(self.list)
+
+    def switch(self):
+
+        choices = [control.lang(32020), control.lang(32021)]
+
+        choice = control.selectDialog(choices)
+
+        if choice == 0:
+            control.setSetting('sport', '0')
+        elif choice == 1:
+            control.setSetting('sport', '1')
+
+        if choice != -1:
+            control.sleep(100)
+            control.refresh()

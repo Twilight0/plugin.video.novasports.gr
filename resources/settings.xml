@@ -5,5 +5,6 @@
         <setting id="pages_size" type="slider" label="32016" default="20" range="0,1,24" option="int"/>
         <setting id="cache_size" type="slider" label="32016" default="6" range="1,1,48" option="int"/>
         <setting label="32010" type="action" action="RunPlugin(plugin://$ID/?action=cache_clear)" option="close"/>
+        <setting id="sport" label="Sport" type="text" default="0" visible="false"/>
     </category>
 </settings>
