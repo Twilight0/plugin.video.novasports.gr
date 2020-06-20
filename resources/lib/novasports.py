@@ -20,7 +20,7 @@ from time import sleep
 import re, json
 from tulip.compat import bytes, str, iteritems
 from tulip import directory, client, cache, control, user_agents
-from datetime import date
+from datetime import date, datetime
 
 
 CACHE_SIZE = int(control.setting('cache_size'))
@@ -113,6 +113,17 @@ class Indexer:
 
         for i in self.list:
             i.update({'action': 'play', 'isFolder': 'False'})
+
+        if 'live' in url and url != self.live_link:
+
+            formatted_date = datetime.strptime(query, '%Y%m%d').strftime('%d-%m-%Y')
+
+            this_date = {
+                'title': control.lang(32023).format(formatted_date),
+                'action': None
+            }
+
+            self.list.insert(0, this_date)
 
         if url == self.live_link:
 

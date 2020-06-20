@@ -99,6 +99,10 @@ msgctxt "#32022"
 msgid "Bookmarks"
 msgstr "Σελιδοδείκτες"
 
+msgctxt "#32023"
+msgid "[I]Current date: {0}[/I]"
+msgstr "[I]Τρέχουσα ημερομηνία: {0}[/I]"
+
 msgctxt "#32501"
 msgid "Add to bookmarks"
 msgstr "Προσθήκη στους σελιδοδείκτες"

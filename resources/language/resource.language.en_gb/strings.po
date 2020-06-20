@@ -99,6 +99,10 @@ msgctxt "#32022"
 msgid "Bookmarks"
 msgstr ""
 
+msgctxt "#32023"
+msgid "[I]Current date: {0}[/I]"
+msgstr ""
+
 msgctxt "#32501"
 msgid "Add to bookmarks"
 msgstr ""
