@@ -40,6 +40,7 @@ class Indexer:
         self.matches_link = ''.join([self.api_link, '/matchcenter/events/date/{date}'])
         self.event_link = ''.join([self.api_link, '/videos/event/{event}/teama/{team_a}/teamb/team_b'])
         self.sports_link = ''.join([self.api_link, '/webtv/{type}/{sport_id}/range/{range_id}/number/24'])
+        self.sports_latest_link = ''.join([self.api_link, '/webtv/latest/range/{range_id}/number/24'])
         self.index_link = ''.join([self.api_link, '/{type}/{event_id}/videos/page/{page}/range/9'])
         self.webtv_link = ''.join([self.base_link, '/web-tv'])
 
@@ -173,14 +174,24 @@ class Indexer:
 
             if 'web-tv' in url:
 
-                json_id = client.parseDOM(html, 'div', attrs={'class': 'web-tv-container-.+'}, ret='class')[0]
-                json_id = re.search(r'(\d+)', json_id).group(1)
-                type_ = client.parseDOM(html, 'div', attrs={'class': 'vocabulary hidden'})[0]
+                if url.endswith('roi'):
 
-                urls = [
-                    self.sports_link.format(type=type_ ,sport_id=json_id, range_id=i) for i in
-                    list(range(0, int(control.setting('pages_size')) + 1))
-                ]
+                    urls = [
+                        self.sports_latest_link.format(range_id=i) for i in list(
+                            range(0, int(control.setting('pages_size')) + 1)
+                        )
+                    ]
+
+                else:
+
+                    json_id = client.parseDOM(html, 'div', attrs={'class': 'web-tv-container-.+'}, ret='class')[0]
+                    json_id = re.search(r'(\d+)', json_id).group(1)
+                    type_ = client.parseDOM(html, 'div', attrs={'class': 'vocabulary hidden'})[0]
+
+                    urls = [
+                        self.sports_link.format(type=type_, sport_id=json_id, range_id=i) for i in
+                        list(range(0, int(control.setting('pages_size')) + 1))
+                    ]
 
             else:
 
@@ -433,7 +444,7 @@ class Indexer:
 
     def webtv(self):
 
-        self.list = cache.get(self._webtv, 24)
+        self.list = cache.get(self._webtv, 48)
 
         if self.list is None:
             return
