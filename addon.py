@@ -53,8 +53,8 @@ elif action == 'categories':
 elif action == 'switch':
     novasports.Indexer().switch()
 
-elif action == 'webtv_collection':
-    novasports.Indexer().webtv_collection()
+elif action == 'bookmarks':
+    novasports.Indexer().bookmarks()
 
 elif action == 'go_to_root':
     from tulip.directory import run_builtin

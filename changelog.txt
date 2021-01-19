@@ -1,3 +1,7 @@
+[B]2.1.0[/B]
+- Various fixes
+- Tweaked imports for Matrix
+
 [B]2.0.2[/B]
 - Fix in webtv's latest videos indexer (additional to the main feed)
 

@@ -19,7 +19,7 @@ from __future__ import unicode_literals, absolute_import
 from time import sleep
 import re, json
 from tulip.compat import bytes, str, iteritems
-from tulip import directory, client, cache, control, user_agents
+from tulip import directory, client, cache, control, user_agents, bookmarks
 from datetime import date, datetime
 
 
@@ -91,9 +91,9 @@ class Indexer:
 
         self.list = bookmarks.get()
 
-        if self.list is None:
-            self.list = [{'title': 'N/A', 'action': None}]
-            directory.add(self.list)
+        if not self.list:
+            na = [{'title': control.lang(32024), 'action': None}]
+            directory.add(na)
             return
 
         for i in self.list:
@@ -101,9 +101,9 @@ class Indexer:
             bookmark['delbookmark'] = i['url']
             i.update({'cm': [{'title': 32502, 'query': {'action': 'deleteBookmark', 'url': json.dumps(bookmark)}}]})
 
-        self.list = sorted(self.list, key=lambda k: k['title'].lower())
+        control.sortmethods('title')
 
-        directory.add(self.list)
+        directory.add(self.list, content='videos')
 
     def videos(self, url, query=None):
 
