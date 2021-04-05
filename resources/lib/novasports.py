@@ -1,19 +1,13 @@
 # -*- coding: utf-8 -*-
 
 '''
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    Novasports.gr Addon
+    Author Twilight0
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    SPDX-License-Identifier: GPL-3.0-only
+    See LICENSES/GPL-3.0-only for more information.
 '''
+
 from __future__ import unicode_literals, absolute_import
 
 from time import sleep
@@ -23,7 +17,8 @@ from tulip import directory, client, cache, control, user_agents, bookmarks
 from datetime import date, datetime
 
 
-CACHE_SIZE = int(control.setting('cache_size'))
+CACHE_SIZE = int(control.setting('cache_size')) * 60
+cache_method = cache.FunctionCache().cache_method
 
 
 class Indexer:
@@ -48,41 +43,41 @@ class Indexer:
 
         self.list = [
             {
-                'title': control.lang(32002),
+                'title': control.lang(30002),
                 'action': 'videos',
                 'url': self.live_link
             }
             ,
             {
-                'title': control.lang(32001),
+                'title': control.lang(30001),
                 'action': 'videos',
                 'url': self.latest_link
             }
             ,
             {
-                'title': control.lang(32003),
+                'title': control.lang(30003),
                 'action': 'matches'
             }
             ,
             {
-                'title': control.lang(32009),
+                'title': control.lang(30009),
                 'action': 'webtv'
             }
             ,
             {
-                'title': control.lang(32017),
+                'title': control.lang(30017),
                 'action': 'categories'
             }
             ,
             {
-                'title': control.lang(32022),
+                'title': control.lang(30022),
                 'action': 'bookmarks'
             }
         ]
 
         for item in self.list:
 
-            cache_clear = {'title': 32010, 'query': {'action': 'cache_clear'}}
+            cache_clear = {'title': 30010, 'query': {'action': 'cache_clear'}}
             item.update({'cm': [cache_clear]})
 
         directory.add(self.list, content='videos')
@@ -92,14 +87,14 @@ class Indexer:
         self.list = bookmarks.get()
 
         if not self.list:
-            na = [{'title': control.lang(32024), 'action': None}]
+            na = [{'title': control.lang(30024), 'action': None}]
             directory.add(na)
             return
 
         for i in self.list:
             bookmark = dict((k, v) for k, v in iteritems(i) if not k == 'next')
             bookmark['delbookmark'] = i['url']
-            i.update({'cm': [{'title': 32502, 'query': {'action': 'deleteBookmark', 'url': json.dumps(bookmark)}}]})
+            i.update({'cm': [{'title': 30502, 'query': {'action': 'deleteBookmark', 'url': json.dumps(bookmark)}}]})
 
         control.sortmethods('title')
 
@@ -107,7 +102,7 @@ class Indexer:
 
     def videos(self, url, query=None):
 
-        self.list = cache.get(self.items_list, CACHE_SIZE, url)
+        self.list = self.items_list(url)
 
         if self.list is None:
             return
@@ -120,7 +115,7 @@ class Indexer:
             formatted_date = datetime.strptime(query, '%Y%m%d').strftime('%d-%m-%Y')
 
             this_date = {
-                'title': control.lang(32023).format(formatted_date),
+                'title': control.lang(30023).format(formatted_date),
                 'action': None
             }
 
@@ -129,7 +124,7 @@ class Indexer:
         if url == self.live_link:
 
             more_live = {
-                'title': control.lang(32013),
+                'title': control.lang(30013),
                 'url': self.live_by_date_link.format(date=bytes(date.today()).replace('-', '')),
                 'action': 'videos',
                 'query': bytes(date.today()).replace('-', '')
@@ -140,21 +135,21 @@ class Indexer:
         elif 'livebydate' in url:
 
             go_to_root = {
-                'title': control.lang(32012),
+                'title': control.lang(30012),
                 'action': 'go_to_root',
                 'isFolder': 'False',
                 'isPlayable': 'False'
             }
 
             next_live = {
-                'title': control.lang(32006),
+                'title': control.lang(30006),
                 'url': self.live_by_date_link.format(date=int(query) + 1),
                 'action': 'videos',
                 'query': bytes(int(query) + 1)
             }
 
             previous_live = {
-                'title': control.lang(32007),
+                'title': control.lang(30007),
                 'url': self.live_by_date_link.format(date=int(query) - 1),
                 'action': 'videos',
                 'query': bytes(int(query) - 1)
@@ -166,6 +161,7 @@ class Indexer:
 
         directory.add(self.list, content='videos')
 
+    @cache_method(CACHE_SIZE)
     def items_list(self, url):
 
         if '/api/v1' not in url:
@@ -232,7 +228,7 @@ class Indexer:
             try:
                 plot = client.replaceHTMLCodes(r['Short_Desc'])
             except TypeError:
-                plot = control.lang(32011)
+                plot = control.lang(30011)
             urls = r['VideoUrl']
 
             for u in urls:
@@ -275,13 +271,13 @@ class Indexer:
                     score_b = str(match['score_b'])
                     desc = match['desc']
                     if not desc:
-                        desc = control.lang(32011)
+                        desc = control.lang(30011)
                     _date = str(match['date'])
                     url = ''.join([self.base_link, match['alias_url']])
 
                     title = ''.join(
                         [
-                            event_name, u': ', team_a, u' - ', team_b, u'[CR]', control.lang(32004),
+                            event_name, u': ', team_a, u' - ', team_b, u'[CR]', control.lang(30004),
                             score_a, u' - ', score_b, u' (', desc, u' | ', _date, u')'
                         ]
                     )
@@ -301,7 +297,7 @@ class Indexer:
 
         if not result['events'] and not result['friendly']:
 
-            self.list = [{'title': control.lang(32008), 'action': 'matches'}]
+            self.list = [{'title': control.lang(30008), 'action': 'matches'}]
 
         else:
 
@@ -314,26 +310,26 @@ class Indexer:
                 self.list.extend(appender(result['friendly']))
 
         previous_date = {
-            'title': control.lang(32007),
+            'title': control.lang(30007),
             'action': 'matches',
             'query': bytes(int(date_) - 1)
         }
 
         next_date = {
-            'title': control.lang(32006),
+            'title': control.lang(30006),
             'action': 'matches',
             'query': bytes(int(date_) + 1)
         }
 
         add_date = {
-            'title': control.lang(32005),
+            'title': control.lang(30005),
             'action': 'add_date',
             'isFolder': 'False',
             'isPlayable': 'False'
         }
 
         go_to_root = {
-            'title': control.lang(32012),
+            'title': control.lang(30012),
             'action': 'go_to_root',
             'isFolder': 'False',
             'isPlayable': 'False'
@@ -424,6 +420,7 @@ class Indexer:
         else:
             directory.resolve(stream)
 
+    @cache_method(CACHE_SIZE)
     def _webtv(self):
 
         html = client.request(self.webtv_link)
@@ -444,7 +441,7 @@ class Indexer:
 
     def webtv(self):
 
-        self.list = cache.get(self._webtv, 48)
+        self.list = self._webtv()
 
         if self.list is None:
             return
@@ -454,6 +451,7 @@ class Indexer:
 
         directory.add(self.list)
 
+    @cache_method(5760)
     def index(self):
 
         html = client.request(self.webtv_link.replace('www', 'm'), headers={'User-Agent': user_agents.IPHONE})
@@ -521,31 +519,31 @@ class Indexer:
 
     def categories(self):
 
-        index_items = cache.get(self.index, 96)
+        index_items = self.index()
 
         if index_items is None:
             return
 
         if control.setting('sport') == '0':
-            integer = 32020
+            integer = 30020
             self.list = index_items['football']
         else:
             self.list = index_items['basket']
-            integer = 32021
+            integer = 30021
 
         for i in self.list:
             i.update({'action': 'videos'})
             bookmark = dict((k, v) for k, v in iteritems(i) if not k == 'next')
             bookmark['bookmark'] = i['url']
-            i.update({'cm': [{'title': 32501, 'query': {'action': 'addBookmark', 'url': json.dumps(bookmark)}}]})
+            i.update({'cm': [{'title': 30501, 'query': {'action': 'addBookmark', 'url': json.dumps(bookmark)}}]})
 
         teams = {
-            'title': control.lang(32018),
+            'title': control.lang(30018),
             'action': 'teams_index'
         }
 
         selector = {
-                'title': control.lang(32019).format(control.lang(integer)),
+                'title': control.lang(30019).format(control.lang(integer)),
                 'action': 'switch',
                 'isFolder': 'False',
                 'isPlayable': 'False'
@@ -558,26 +556,26 @@ class Indexer:
 
     def teams_index(self):
 
-        index_items = cache.get(self.index, 96)
+        index_items = self.index()
 
         if index_items is None:
             return
 
         if control.setting('sport') == '0':
-            integer = 32020
+            integer = 30020
             self.list = index_items['teams_football']
         else:
             self.list = index_items['teams_basket']
-            integer = 32021
+            integer = 30021
 
         for i in self.list:
             i.update({'action': 'videos'})
             bookmark = dict((k, v) for k, v in iteritems(i) if not k == 'next')
             bookmark['bookmark'] = i['url']
-            i.update({'cm': [{'title': 32501, 'query': {'action': 'addBookmark', 'url': json.dumps(bookmark)}}]})
+            i.update({'cm': [{'title': 30501, 'query': {'action': 'addBookmark', 'url': json.dumps(bookmark)}}]})
 
         selector = {
-            'title': control.lang(32019).format(control.lang(integer)),
+            'title': control.lang(30019).format(control.lang(integer)),
             'action': 'switch',
             'isFolder': 'False',
             'isPlayable': 'False'
@@ -589,7 +587,7 @@ class Indexer:
 
     def switch(self):
 
-        choices = [control.lang(32020), control.lang(32021)]
+        choices = [control.lang(30020), control.lang(30021)]
 
         choice = control.selectDialog(choices)
 

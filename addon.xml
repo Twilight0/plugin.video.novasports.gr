@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.novasports.gr" version="2.1.0" name="Novasports.gr" provider-name="Twilight0">
+<addon id="plugin.video.novasports.gr" version="2.2.0" name="Novasports.gr" provider-name="Twilight0">
 	<requires>
 		<import addon="xbmc.addon" version="16.1.000"/>
-		<import addon="script.module.tulip" version="2.8.2"/>
+		<import addon="script.module.tulip" version="2.8.17"/>
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="addon.py">
 		<provides>video</provides>
@@ -16,11 +16,15 @@
 		<description lang="el_GR">Βίντεο on demand και εκπομπές από το novasports.gr</description>
 		<disclaimer lang="en_GB">This addon offers content available in Greece and is not published nor endorsed by novasports.gr</disclaimer>
 		<disclaimer lang="el_GR">Το πρόσθετο αυτό προσφέρει περιεχόμενο διαθέσιμο στην Ελλάδα και δεν έχει δημοσιευθεί ούτε εγκριθεί από το novasports.gr</disclaimer>
-		<license>GNU GENERAL PUBLIC LICENSE. Version 3, 29 June 2007</license>
+		<license>GPL-3.0-only</license>
 		<source>https://github.com/Twilight0/plugin.video.novasports.gr</source>
 		<website>http://www.novasports.gr/</website>
-        <size>815135</size>
-		<news>[B]2.1.0[/B]
+        <size>460800</size>
+		<news>[B]2.2.0[/B]
+- Change cache method
+- Tweak label indexes
+
+[B]2.1.0[/B]
 - Various fixes
 - Tweaked imports for Matrix
 
